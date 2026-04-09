@@ -1,36 +1,32 @@
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "podcast",
-	"main": "./src/worker.ts",
-	"compatibility_date": "2026-03-29",
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
-	"d1_databases": [
-		{
-			"binding": "DB",
-			"database_name": "podcast-emdash-DB","database_id": "bd09340d-dae8-46cf-952d-2f35650f780d",
-			// Run `wrangler d1 create my-emdash-site` and paste the ID here
-		},
-	],
-	"r2_buckets": [
-		{
-			"binding": "MEDIA",
-			"bucket_name": "podcast-emdash-media","preview_bucket_name": "podcast-emdash-media",
-		},
-	],
-	"KV_namespaces": [
-	{
-		"bind": "SESSION",
-		"id": "520d4413117648f999d65a9cc0e42564"
-	},
-	],
-	"observability": {
-		"enabled": true,
-	},
-	// "worker_loaders": [
-	// 	{
-	// 		"binding": "LOADER",
-	// 	},
-	// ],
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "podcast",
+  "main": "./src/worker.ts",
+  "compatibility_date": "2026-03-29",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "podcast-emdash-DB",
+      "database_id": "bd09340d-dae8-46cf-952d-2f35650f780d"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "podcast-emdash-media",
+      "preview_bucket_name": "podcast-emdash-media"
+    }
+  ],
+  "KV_namespaces": [
+    {
+      "binding": "SESSION",
+      "id": "520d4413117648f999d65a9cc0e42564"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
 }
