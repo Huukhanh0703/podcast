@@ -4,6 +4,7 @@ import {
 	getEmDashCollection,
 	getEntryTerms,
 	getSeoMeta,
+	getSiteSettings,
 } from "emdash";
 import {
 	Image,
@@ -15,6 +16,14 @@ import {
 import Base from "../../layouts/Base.astro";
 import PostCard from "../../components/PostCard.astro";
 import { getReadingTime } from "../../utils/reading-time";
+
+type DataWithFeaturedImage = {
+	featured_image?: unknown;
+	featuredImage?: unknown;
+};
+
+const getFeaturedImage = (data: DataWithFeaturedImage) =>
+	data.featured_image ?? data.featuredImage;
 
 const { slug } = Astro.params;
 
@@ -51,11 +60,24 @@ function getImageUrl(img: unknown): string | undefined {
 	}
 	return undefined;
 }
-const featuredImageUrl = getImageUrl(post.data.featured_image);
+const featuredMedia = getFeaturedImage(post.data);
+const featuredImageUrl = getImageUrl(featuredMedia);
+const featuredImageForRender = featuredMedia
+	? {
+			...(featuredMedia as Record<string, unknown>),
+			src: featuredImageUrl,
+			alt:
+				(typeof (featuredMedia as Record<string, unknown>).alt === "string" &&
+				(featuredMedia as Record<string, unknown>).alt) ||
+				post.data.title,
+		}
+	: null;
+const settings = await getSiteSettings();
+const siteTitle = settings.title || "Field Notes";
 
 // Generate SEO meta from content
 const seo = getSeoMeta(post, {
-	siteTitle: "My Blog",
+	siteTitle,
 	siteUrl: Astro.url.origin,
 	path: `/posts/${slug}`,
 	defaultOgImage: featuredImageUrl,
@@ -110,9 +132,9 @@ const publishDate =
 	<article class="article">
 		{/* Hero: Full-width featured image */}
 		{
-			post.data.featured_image && (
+			featuredImageForRender && (
 				<div class="article-hero" {...post.edit.featured_image}>
-					<Image image={post.data.featured_image} />
+					<Image image={featuredImageForRender} />
 				</div>
 			)
 		}
@@ -256,7 +278,7 @@ const publishDate =
 								<PostCard
 									title={p.data.title}
 									excerpt={p.data.excerpt}
-									featuredImage={p.data.featured_image}
+									featuredImage={getFeaturedImage(p.data)}
 									href={`/posts/${p.id}`}
 									date={p.data.publishedAt ?? undefined}
 									readingTime={getReadingTime(p.data.content)}

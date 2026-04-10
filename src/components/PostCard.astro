@@ -11,6 +11,8 @@ interface Props {
 	readingTime?: number;
 	tags?: Array<{ slug: string; label: string }>;
 	bylines?: ContentBylineCredit[];
+	variant?: "feature" | "secondary" | "compact";
+	showImage?: boolean;
 }
 
 const {
@@ -20,9 +22,43 @@ const {
 	href,
 	date,
 	readingTime,
-	tags,
-	bylines,
+	tags = [],
+	bylines = [],
+	variant = "secondary",
+	showImage = true,
 } = Astro.props;
+
+type ImageLike = {
+	id?: string;
+	src?: string;
+	alt?: string;
+	meta?: {
+		storageKey?: string | null;
+	};
+};
+
+function normalizeFeaturedImage(
+	image: MediaValue | string | undefined,
+	fallbackAlt: string
+): ImageLike | undefined {
+	if (!image) return undefined;
+
+	if (typeof image === "string") {
+		return { src: image, alt: fallbackAlt };
+	}
+
+	const candidate = image as ImageLike;
+	if (candidate.src) return candidate;
+
+	const storageKey = candidate.meta?.storageKey || candidate.id;
+	if (!storageKey) return undefined;
+
+	return {
+		...candidate,
+		src: `/_emdash/api/media/file/${storageKey}`,
+		alt: candidate.alt || fallbackAlt,
+	};
+}
 
 const formattedDate = date
 	? date.toLocaleDateString("en-US", {
@@ -31,23 +67,26 @@ const formattedDate = date
 			day: "numeric",
 		})
 	: null;
+
+const normalizedFeaturedImage = normalizeFeaturedImage(featuredImage, title);
+const hasImage = showImage && !!normalizedFeaturedImage;
+const visibleTags = variant === "compact" ? tags.slice(0, 1) : tags.slice(0, 2);
+const TitleTag = variant === "feature" ? "h2" : "h3";
 ---
 
-<article class="post-card">
+<article class:list={["post-card", `post-card--${variant}`]}>
 	<a href={href} class="card-link">
 		{
-			featuredImage ? (
+			hasImage && (
 				<div class="card-image">
-					<Image image={featuredImage} />
+					<Image image={normalizedFeaturedImage!} />
 				</div>
-			) : (
-				<div class="card-placeholder" />
 			)
 		}
 		<div class="card-body">
 			<div class="card-meta">
 				{
-					bylines && bylines.length > 0 && (
+					bylines.length > 0 && (
 						<>
 							<div class="card-bylines">
 								{bylines.slice(0, 1).map((credit) => (
@@ -59,27 +98,10 @@ const formattedDate = date
 												class="card-byline-avatar"
 											/>
 										)}
-										<span class="card-byline-name">
-											{credit.byline.displayName}
-										</span>
+										<span class="card-byline-name">{credit.byline.displayName}</span>
 									</span>
 								))}
-								{bylines.length > 1 && (
-									<span
-										class="byline-more"
-										data-tooltip={bylines
-											.slice(1)
-											.map((c) => c.byline.displayName)
-											.join(", ")}
-										title={bylines
-											.slice(1)
-											.map((c) => c.byline.displayName)
-											.join(", ")}
-										tabindex="0"
-									>
-										+{bylines.length - 1}
-									</span>
-								)}
+								{bylines.length > 1 && <span class="byline-more">+{bylines.length - 1}</span>}
 							</div>
 							{(formattedDate || readingTime) && <span class="meta-dot" />}
 						</>
@@ -87,16 +109,16 @@ const formattedDate = date
 				}
 				{formattedDate && <time>{formattedDate}</time>}
 				{formattedDate && readingTime && <span class="meta-dot" />}
-				{readingTime && <span>{readingTime} min</span>}
+				{readingTime && <span>{readingTime} min read</span>}
 			</div>
-			<h2 class="card-title">{title}</h2>
+			<TitleTag class="card-title">{title}</TitleTag>
 			{excerpt && <p class="card-excerpt">{excerpt}</p>}
 		</div>
 	</a>
 	{
-		tags && tags.length > 0 && (
+		visibleTags.length > 0 && (
 			<div class="card-tags">
-				{tags.slice(0, 2).map((tag) => (
+				{visibleTags.map((tag) => (
 					<a href={`/tag/${tag.slug}`} class="card-tag">
 						{tag.label}
 					</a>
@@ -110,20 +132,34 @@ const formattedDate = date
 	.post-card {
 		display: flex;
 		flex-direction: column;
+		gap: var(--spacing-3);
+		padding-top: var(--spacing-6);
+		border-top: 1px solid var(--color-border);
+	}
+
+	.post-card--feature {
+		padding-top: 0;
+		border-top: none;
 	}
 
 	.card-link {
-		display: block;
-		text-decoration: none;
+		display: grid;
+		gap: var(--spacing-4);
 		color: inherit;
+	}
+
+	.post-card--compact .card-link {
+		gap: var(--spacing-3);
 	}
 
 	.card-image {
 		aspect-ratio: 16 / 10;
 		overflow: hidden;
-		border-radius: var(--radius-lg);
 		background: var(--color-surface);
-		margin-bottom: var(--spacing-4);
+	}
+
+	.post-card--feature .card-image {
+		aspect-ratio: 16 / 11;
 	}
 
 	.card-image img {
@@ -134,18 +170,12 @@ const formattedDate = date
 	}
 
 	.card-link:hover .card-image img {
-		transform: scale(1.03);
-	}
-
-	.card-placeholder {
-		aspect-ratio: 16 / 10;
-		border-radius: var(--radius-lg);
-		background: var(--color-surface);
-		margin-bottom: var(--spacing-4);
+		transform: scale(1.02);
 	}
 
 	.card-body {
-		flex: 1;
+		display: grid;
+		gap: var(--spacing-2);
 	}
 
 	.card-meta {
@@ -153,78 +183,17 @@ const formattedDate = date
 		align-items: center;
 		flex-wrap: wrap;
 		column-gap: var(--spacing-2);
-		row-gap: 0;
-		font-size: var(--font-size-sm);
-		color: var(--color-muted);
-		margin-bottom: var(--spacing-2);
-	}
-
-	.card-meta time,
-	.card-meta span:not(.meta-dot) {
-		white-space: nowrap;
-	}
-
-	.meta-dot {
-		width: 3px;
-		height: 3px;
-		border-radius: 50%;
-		background: var(--color-muted);
-	}
-
-	.card-title {
-		font-size: var(--font-size-xl);
-		font-weight: 600;
-		line-height: var(--leading-snug);
-		letter-spacing: var(--tracking-snug);
-		margin-bottom: var(--spacing-2);
-		transition: color var(--transition-fast);
-	}
-
-	.card-link:hover .card-title {
-		color: var(--color-accent);
-	}
-
-	.card-excerpt {
-		font-size: var(--font-size-base);
-		line-height: var(--leading-relaxed);
-		color: var(--color-text-secondary);
-		display: -webkit-box;
-		-webkit-line-clamp: 2;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
-	}
-
-	.card-tags {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--spacing-2);
-		margin-top: var(--spacing-3);
-	}
-
-	.card-tag {
-		display: inline-block;
-		padding: var(--tag-padding-y) var(--spacing-2);
+		row-gap: var(--spacing-1);
 		font-size: var(--font-size-xs);
+		letter-spacing: var(--tracking-wide);
+		text-transform: uppercase;
 		color: var(--color-muted);
-		background: var(--color-surface);
-		border-radius: var(--radius);
-		text-decoration: none;
-		transition:
-			color var(--transition-fast),
-			background var(--transition-fast);
 	}
 
-	.card-tag:hover {
-		color: var(--color-text);
-		background: var(--color-border);
-	}
-
-	/* Byline styles */
 	.card-bylines {
 		display: flex;
 		align-items: center;
 		gap: 2px;
-		white-space: nowrap;
 	}
 
 	.card-byline {
@@ -243,37 +212,79 @@ const formattedDate = date
 	.card-byline-name {
 		font-weight: 500;
 		color: var(--color-text-secondary);
+		letter-spacing: normal;
+		text-transform: none;
 	}
 
 	.byline-more {
-		position: relative;
 		font-size: var(--font-size-xs);
 		color: var(--color-muted);
-		margin-left: 2px;
-		cursor: default;
-		border-radius: var(--radius);
-		outline-offset: 2px;
+		letter-spacing: normal;
+		text-transform: none;
 	}
 
-	.byline-more:focus-visible {
-		outline: 2px solid var(--color-accent);
+	.meta-dot {
+		width: 3px;
+		height: 3px;
+		border-radius: 50%;
+		background: var(--color-muted);
 	}
 
-	.byline-more[data-tooltip]:hover::after,
-	.byline-more[data-tooltip]:focus-visible::after {
-		content: attr(data-tooltip);
-		position: absolute;
-		bottom: calc(100% + 6px);
-		left: 50%;
-		transform: translateX(-50%);
-		white-space: nowrap;
-		background: var(--color-text);
-		color: var(--color-bg);
+	.card-title {
+		font-family: var(--font-serif);
+		font-size: clamp(1.55rem, 2vw, 2.2rem);
+		font-weight: 700;
+		line-height: var(--leading-tight);
+		letter-spacing: var(--tracking-tight);
+		transition: color var(--transition-fast);
+	}
+
+	.post-card--compact .card-title {
+		font-size: clamp(1.2rem, 1.7vw, 1.55rem);
+	}
+
+	.post-card--feature .card-title {
+		font-size: clamp(2rem, 3vw, 3rem);
+	}
+
+	.card-link:hover .card-title {
+		color: var(--color-accent);
+	}
+
+	.card-excerpt {
+		font-size: var(--font-size-base);
+		line-height: var(--leading-relaxed);
+		color: var(--color-text-secondary);
+		display: -webkit-box;
+		-webkit-line-clamp: 3;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	.post-card--compact .card-excerpt {
+		-webkit-line-clamp: 2;
+		font-size: var(--font-size-sm);
+	}
+
+	.card-tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--spacing-2);
+	}
+
+	.card-tag {
+		display: inline-block;
+		padding: var(--tag-padding-y) var(--spacing-2);
 		font-size: var(--font-size-xs);
-		font-weight: 400;
-		padding: var(--spacing-1) var(--spacing-2);
-		border-radius: var(--radius);
-		pointer-events: none;
-		z-index: 10;
+		letter-spacing: var(--tracking-wide);
+		text-transform: uppercase;
+		color: var(--color-muted);
+		border: 1px solid var(--color-border);
+		border-radius: 999px;
+	}
+
+	.card-tag:hover {
+		color: var(--color-text);
+		border-color: var(--color-text-secondary);
 	}
 </style>

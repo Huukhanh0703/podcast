@@ -2,14 +2,14 @@
 	"$schema": "https://emdashcms.com/seed.schema.json",
 	"version": "1",
 	"meta": {
-		"name": "Blog Starter",
-		"description": "A blog with posts and pages",
+		"name": "Field Notes",
+		"description": "A personal publication with essays, notes, and software writing",
 		"author": "EmDash"
 	},
 
 	"settings": {
-		"title": "My Blog",
-		"tagline": "Thoughts on building for the web"
+		"title": "Field Notes",
+		"tagline": "Notes on software, design, and independent work"
 	},
 
 	"collections": [
@@ -76,9 +76,9 @@
 			"hierarchical": true,
 			"collections": ["posts"],
 			"terms": [
-				{ "slug": "development", "label": "Development" },
+				{ "slug": "software", "label": "Software" },
 				{ "slug": "design", "label": "Design" },
-				{ "slug": "notes", "label": "Notes" }
+				{ "slug": "field-notes", "label": "Field Notes" }
 			]
 		},
 		{
@@ -115,9 +115,10 @@
 			"name": "primary",
 			"label": "Primary Navigation",
 			"items": [
-				{ "type": "custom", "label": "Home", "url": "/" },
-				{ "type": "custom", "label": "About", "url": "/pages/about" },
-				{ "type": "custom", "label": "Posts", "url": "/posts" }
+				{ "type": "custom", "label": "Writing", "url": "/posts" },
+				{ "type": "custom", "label": "Design", "url": "/category/design" },
+				{ "type": "custom", "label": "Field Notes", "url": "/category/field-notes" },
+				{ "type": "custom", "label": "About", "url": "/pages/about" }
 			]
 		}
 	],
@@ -345,7 +346,7 @@
 					{ "byline": "byline-guest", "roleLabel": "Guest essay" }
 				],
 				"taxonomies": {
-					"category": ["development"],
+					"category": ["software"],
 					"tag": ["opinion"]
 				}
 			},
@@ -413,7 +414,7 @@
 				},
 				"bylines": [{ "byline": "byline-editorial" }],
 				"taxonomies": {
-					"category": ["development"],
+					"category": ["software"],
 					"tag": ["webdev", "opinion"]
 				}
 			},
@@ -480,7 +481,7 @@
 					]
 				},
 				"taxonomies": {
-					"category": ["notes"],
+					"category": ["field-notes"],
 					"tag": ["opinion"]
 				}
 			},
@@ -547,7 +548,7 @@
 					]
 				},
 				"taxonomies": {
-					"category": ["development"],
+					"category": ["software"],
 					"tag": ["tools"]
 				}
 			},
@@ -681,7 +682,7 @@
 					]
 				},
 				"taxonomies": {
-					"category": ["development"],
+					"category": ["software"],
 					"tag": ["creativity"]
 				}
 			},
@@ -748,7 +749,7 @@
 					]
 				},
 				"taxonomies": {
-					"category": ["notes"],
+					"category": ["field-notes"],
 					"tag": ["opinion"]
 				}
 			},
